@@ -132,6 +132,54 @@ app.post("/books", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// update a book (only the owner)
+app.patch("/books/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { title, author, category, imageUrl, description, totalCopies } =
+    req.body;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: "Invalid book id!" });
+  }
+
+  const book = await booksCollection.findOne({ _id: new ObjectId(id) });
+
+  if (!book) {
+    return res.status(404).send({ message: "Book not found!" });
+  }
+
+  if (book.userEmail !== req.user.email) {
+    return res
+      .status(403)
+      .send({ message: "You can only update your own books!" });
+  }
+
+  const copies = Number(totalCopies);
+  const borrowed = book.totalCopies - book.availableCopies;
+
+  if (!Number.isInteger(copies) || copies < borrowed || copies < 1) {
+    return res.status(400).send({
+      message: `Total copies cannot be less than ${Math.max(borrowed, 1)}!`,
+    });
+  }
+
+  const updatedBook = {
+    title,
+    author,
+    category,
+    imageUrl,
+    description,
+    totalCopies: copies,
+    availableCopies: copies - borrowed,
+  };
+
+  const result = await booksCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedBook },
+  );
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
