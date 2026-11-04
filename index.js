@@ -258,6 +258,15 @@ app.post("/borrows", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// borrows of the logged in user
+app.get("/borrows", verifyToken, async (req, res) => {
+  const result = await borrowsCollection
+    .find({ userEmail: req.user.email })
+    .sort({ borrowDate: -1 })
+    .toArray();
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
