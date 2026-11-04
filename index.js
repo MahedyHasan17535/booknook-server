@@ -64,6 +64,23 @@ const verifyToken = async (req, res, next) => {
   }
 };
 
+// ---------------------------------------------------------------- books
+
+// all books (public) - newest first, ?limit=6 for new arrivals, ?email= for my books
+app.get("/books", async (req, res) => {
+  const { limit, email } = req.query;
+
+  const query = email ? { userEmail: email } : {};
+  let cursor = booksCollection.find(query).sort({ createdAt: -1 });
+
+  if (limit) {
+    cursor = cursor.limit(Number(limit));
+  }
+
+  const result = await cursor.toArray();
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
