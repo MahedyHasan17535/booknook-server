@@ -267,6 +267,34 @@ app.get("/borrows", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// return a book
+app.delete("/borrows/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: "Invalid borrow id!" });
+  }
+
+  const borrow = await borrowsCollection.findOne({
+    _id: new ObjectId(id),
+    userEmail: req.user.email,
+  });
+
+  if (!borrow) {
+    return res.status(404).send({ message: "Borrow record not found!" });
+  }
+
+  const result = await borrowsCollection.deleteOne({ _id: new ObjectId(id) });
+
+  // give the copy back
+  await booksCollection.updateOne(
+    { _id: new ObjectId(borrow.bookId) },
+    { $inc: { availableCopies: 1 } },
+  );
+
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
