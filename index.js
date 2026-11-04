@@ -98,6 +98,40 @@ app.get("/books/:id", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// add a book
+app.post("/books", verifyToken, async (req, res) => {
+  const { title, author, category, imageUrl, description, totalCopies } =
+    req.body;
+
+  const copies = Number(totalCopies);
+
+  if (!title || !author || !category || !imageUrl || !description) {
+    return res.status(400).send({ message: "Please fill in all the fields!" });
+  }
+
+  if (!Number.isInteger(copies) || copies < 1) {
+    return res
+      .status(400)
+      .send({ message: "Total copies must be at least 1!" });
+  }
+
+  const book = {
+    title,
+    author,
+    category,
+    imageUrl,
+    description,
+    totalCopies: copies,
+    availableCopies: copies,
+    userName: req.user.name,
+    userEmail: req.user.email,
+    createdAt: new Date(),
+  };
+
+  const result = await booksCollection.insertOne(book);
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
