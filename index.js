@@ -205,6 +205,59 @@ app.delete("/books/:id", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// -------------------------------------------------------------- borrows
+
+// borrow a book
+app.post("/borrows", verifyToken, async (req, res) => {
+  const { bookId } = req.body;
+
+  if (!ObjectId.isValid(bookId)) {
+    return res.status(400).send({ message: "Invalid book id!" });
+  }
+
+  // a user cannot borrow the same book two times at the same time
+  const alreadyBorrowed = await borrowsCollection.findOne({
+    bookId,
+    userEmail: req.user.email,
+  });
+
+  if (alreadyBorrowed) {
+    return res
+      .status(409)
+      .send({ message: "You have already borrowed this book!" });
+  }
+
+  // take one copy (only if a copy is still available)
+  const book = await booksCollection.findOneAndUpdate(
+    { _id: new ObjectId(bookId), availableCopies: { $gt: 0 } },
+    { $inc: { availableCopies: -1 } },
+    { returnDocument: "after" },
+  );
+
+  if (!book) {
+    return res
+      .status(400)
+      .send({ message: "This book is not available right now!" });
+  }
+
+  const borrowDate = new Date();
+  const returnDate = new Date();
+  returnDate.setDate(returnDate.getDate() + BORROW_DAYS);
+
+  const borrow = {
+    bookId,
+    bookTitle: book.title,
+    bookImage: book.imageUrl,
+    userName: req.user.name,
+    userEmail: req.user.email,
+    borrowDate,
+    returnDate,
+  };
+
+  const result = await borrowsCollection.insertOne(borrow);
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
