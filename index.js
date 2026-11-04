@@ -81,6 +81,23 @@ app.get("/books", async (req, res) => {
   res.send(result);
 });
 
+// one book
+app.get("/books/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: "Invalid book id!" });
+  }
+
+  const result = await booksCollection.findOne({ _id: new ObjectId(id) });
+
+  if (!result) {
+    return res.status(404).send({ message: "Book not found!" });
+  }
+
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
