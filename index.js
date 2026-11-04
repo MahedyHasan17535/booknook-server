@@ -180,6 +180,31 @@ app.patch("/books/:id", verifyToken, async (req, res) => {
   res.send(result);
 });
 
+// delete a book (only the owner)
+app.delete("/books/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).send({ message: "Invalid book id!" });
+  }
+
+  const book = await booksCollection.findOne({ _id: new ObjectId(id) });
+
+  if (!book) {
+    return res.status(404).send({ message: "Book not found!" });
+  }
+
+  if (book.userEmail !== req.user.email) {
+    return res
+      .status(403)
+      .send({ message: "You can only delete your own books!" });
+  }
+
+  await borrowsCollection.deleteMany({ bookId: id });
+  const result = await booksCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
 app.get("/", (req, res) => {
   res.send("BookNook server is running!");
 });
