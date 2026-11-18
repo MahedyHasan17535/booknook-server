@@ -1,39 +1,20 @@
 # 📚 BookNook Server
 
-Express.js + MongoDB API for **BookNook**, a small online library.
+## Description
 
-**Client repository:** https://github.com/your-username/booknook-client  
-**Live API:** https://your-booknook-server.vercel.app
+This is the backend of BookNook. It stores all books and borrows in MongoDB and protects the private routes with a JWT login token created by Better Auth on the client.
 
-## API routes
+## Technologies Used
 
-| Method | Route | Access | Description |
-|---|---|---|---|
-| GET | `/books` | public | All books, newest first. `?limit=6` for new arrivals, `?email=` for one user's books |
-| GET | `/books/:id` | token | One book |
-| POST | `/books` | token | Add a book (saves the added date) |
-| PATCH | `/books/:id` | token (owner) | Update a book |
-| DELETE | `/books/:id` | token (owner) | Delete a book |
-| POST | `/borrows` | token | Borrow a book (`$inc` copies by -1, no double borrow) |
-| GET | `/borrows` | token | Borrows of the logged in user |
-| DELETE | `/borrows/:id` | token | Return a book (`$inc` copies by +1) |
+Node.js, Express.js, MongoDB, JWT (jose), CORS, dotenv
 
-Protected routes need an `Authorization: Bearer <token>` header. The token is the
-JWT created by BetterAuth on the client; the server checks it with the public keys
-from `CLIENT_URL/api/auth/jwks` (`jose`).
+## Key Features
 
-## Run locally
+1. **8 API routes** – get all books, get one book, add, update and delete a book, borrow a book, get my borrows and return a book.
+2. **New arrivals and my books** – books are sorted newest first, with `?limit=6` for new arrivals and `?email=` for one user's books.
+3. **JWT protected routes** – every private route checks the `Authorization: Bearer <token>` header with the public keys from the client.
+4. **Owner only edit and delete** – a user can only update or delete the books they added.
+5. **Available copies** – borrowing reduces the copies by 1 with `$inc`, returning gives the copy back, and a book with 0 copies cannot be borrowed.
+6. **No double borrow** – the same user cannot borrow the same book twice at the same time.
+7. **Clean error messages** – every error sends a clear message that the client shows in a toast.
 
-```bash
-npm install
-cp .env.example .env   # then fill in the values
-npm run dev
-```
-
-```env
-MONGODB_URI=
-CLIENT_URL=http://localhost:3000
-```
-
-The server starts on port `8000`. Deploy on Vercel with the same environment
-variables (`vercel.json` is included).
